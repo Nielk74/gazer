@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gazer Concept 03 - Trace Flow Explorer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #eef2f6;
+        --surface: #ffffff;
+        --surface-2: #f5f7fa;
+        --text: #182230;
+        --muted: #667085;
+        --border: #d8e0ea;
+        --primary: #3157d5;
+        --teal: #0f766e;
+        --warn: #c26a00;
+        --bad: #d92d20;
+        --ok: #16805a;
+        --shadow: 0 22px 70px rgba(25, 38, 64, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-width: 1180px;
+        min-height: 780px;
+        color: var(--text);
+        background: var(--bg);
+      }
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+      button:focus-visible, [role="button"]:focus-visible {
+        outline: 3px solid rgba(49, 87, 213, .28);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 16px;
+        height: 100vh;
+        padding: 18px;
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 16px;
+        min-height: 100px;
+        padding: 18px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; letter-spacing: 0; }
+      h1 { margin-bottom: 6px; font-size: 28px; line-height: 1.1; }
+      h2 { margin-bottom: 10px; font-size: 17px; }
+      h3 { margin-bottom: 8px; font-size: 15px; }
+      p, .muted, small { color: var(--muted); }
+
+      .query {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        min-width: 440px;
+        padding: 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .query input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(430px, .95fr);
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .left, .right {
+        display: grid;
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .left { grid-template-rows: minmax(0, 1fr) 280px; }
+      .right { grid-template-rows: 300px minmax(0, 1fr); }
+
+      .graph-panel, .waterfall, .detail, .logs {
+        min-height: 0;
+        overflow: hidden;
+        padding: 16px;
+      }
+
+      .graph-panel {
+        position: relative;
+      }
+
+      .scenario-bar {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .scenario {
+        min-height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        color: var(--muted);
+        background: var(--surface-2);
+        font-weight: 750;
+      }
+
+      .scenario.active {
+        color: #fff;
+        border-color: var(--primary);
+        background: var(--primary);
+      }
+
+      svg { width: 100%; height: calc(100% - 82px); min-height: 430px; }
+
+      .flow-edge {
+        fill: none;
+        stroke: #b8c4d4;
+        stroke-width: 3;
+      }
+
+      .flow-edge.active { stroke: var(--primary); stroke-width: 5; }
+      .flow-edge.error { stroke: var(--bad); stroke-width: 5; }
+
+      .svc rect {
+        fill: var(--surface);
+        stroke: var(--border);
+        stroke-width: 1.5;
+      }
+
+      .svc text {
+        fill: var(--text);
+        font-size: 13px;
+        font-weight: 800;
+        pointer-events: none;
+      }
+
+      .svc .sub {
+        fill: var(--muted);
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .svc.selected rect {
+        stroke: var(--primary);
+        stroke-width: 3;
+      }
+
+      .svc.warn rect { stroke: var(--warn); fill: #fff8ed; }
+      .svc.bad rect { stroke: var(--bad); fill: #fff4f2; }
+
+      .waterfall-list {
+        display: grid;
+        gap: 9px;
+        overflow: auto;
+        max-height: 218px;
+        padding-right: 4px;
+      }
+
+      .span-row {
+        display: grid;
+        grid-template-columns: 128px minmax(0, 1fr) 72px;
+        align-items: center;
+        gap: 10px;
+        min-height: 38px;
+        padding: 7px 9px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface-2);
+      }
+
+      .span-row.active {
+        border-color: rgba(49, 87, 213, .5);
+        background: #eef2ff;
+      }
+
+      .bar-track {
+        height: 9px;
+        border-radius: 99px;
+        background: #dfe6ef;
+        overflow: hidden;
+      }
+
+      .bar {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--teal);
+      }
+
+      .bar.warn { background: var(--warn); }
+      .bar.bad { background: var(--bad); }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .metric {
+        min-height: 72px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 22px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .diagnosis {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .diagnosis div, .log {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+        padding: 10px;
+      }
+
+      .logs-list {
+        display: grid;
+        gap: 8px;
+        max-height: 400px;
+        overflow: auto;
+      }
+
+      .log {
+        display: grid;
+        grid-template-columns: 74px 60px minmax(0, 1fr);
+        gap: 8px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .error { color: var(--bad); }
+      .warn { color: var(--warn); }
+      .info { color: var(--primary); }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="panel top">
+        <div>
+          <h1>Trace Flow Explorer</h1>
+          <p class="muted">Follow a single customer request through service spans, retries, downstream calls, and correlated logs.</p>
+          <div class="scenario-bar">
+            <button class="scenario active" data-scenario="degraded">Degraded checkout</button>
+            <button class="scenario" data-scenario="normal">Normal request</button>
+            <button class="scenario" data-scenario="retry">Retry storm</button>
+          </div>
+        </div>
+        <label class="query">
+          <span>trace</span>
+          <input value="trc_98f2.checkout.submit" aria-label="Trace id" />
+        </label>
+      </header>
+
+      <section class="layout">
+        <section class="left">
+          <article class="panel graph-panel">
+            <h2>Request path graph</h2>
+            <svg viewBox="0 0 760 430" role="img" aria-label="Trace request graph">
+              <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#3157d5"></path>
+                </marker>
+              </defs>
+              <g id="edges"></g>
+              <g id="nodes"></g>
+            </svg>
+          </article>
+
+          <article class="panel waterfall">
+            <h2>Span waterfall</h2>
+            <div class="waterfall-list" id="waterfall"></div>
+          </article>
+        </section>
+
+        <section class="right">
+          <article class="panel detail">
+            <h2 id="serviceName">Checkout API</h2>
+            <p class="muted" id="serviceSub">commerce span</p>
+            <div class="metric-grid" id="metrics"></div>
+            <div class="diagnosis" id="diagnosis"></div>
+          </article>
+
+          <article class="panel logs">
+            <h2>Correlated logs</h2>
+            <div class="logs-list" id="logs"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const graph = [
+        { id: "client", name: "Client", sub: "browser", state: "ok", x: 48, y: 178, w: 104, h: 56 },
+        { id: "edge", name: "Edge", sub: "gateway", state: "ok", x: 202, y: 178, w: 104, h: 56 },
+        { id: "auth", name: "Auth", sub: "identity", state: "ok", x: 366, y: 80, w: 112, h: 56 },
+        { id: "checkout", name: "Checkout", sub: "commerce", state: "warn", x: 374, y: 190, w: 126, h: 62 },
+        { id: "orders", name: "Orders DB", sub: "write", state: "ok", x: 574, y: 84, w: 118, h: 56 },
+        { id: "billing", name: "Billing", sub: "authorize", state: "bad", x: 572, y: 204, w: 118, h: 62 },
+        { id: "events", name: "Events", sub: "publish", state: "warn", x: 570, y: 326, w: 118, h: 56 }
+      ];
+
+      const edges = [
+        ["client", "edge"], ["edge", "auth"], ["edge", "checkout"], ["checkout", "orders"], ["checkout", "billing"], ["checkout", "events"]
+      ];
+
+      const scenarios = {
+        degraded: {
+          selected: "checkout",
+          spans: [
+            ["client", "Client submit", 38, "ok"], ["edge", "Gateway route", 42, "ok"], ["auth", "Auth check", 63, "ok"],
+            ["checkout", "Checkout orchestration", 211, "warn"], ["orders", "Order write", 18, "ok"], ["billing", "Billing authorize", 1200, "bad"], ["events", "Publish checkout event", 96, "warn"]
+          ]
+        },
+        normal: {
+          selected: "edge",
+          spans: [
+            ["client", "Client submit", 31, "ok"], ["edge", "Gateway route", 35, "ok"], ["auth", "Auth check", 42, "ok"],
+            ["checkout", "Checkout orchestration", 88, "ok"], ["orders", "Order write", 14, "ok"], ["billing", "Billing authorize", 72, "ok"], ["events", "Publish checkout event", 18, "ok"]
+          ]
+        },
+        retry: {
+          selected: "billing",
+          spans: [
+            ["client", "Client submit", 40, "ok"], ["edge", "Gateway route", 55, "warn"], ["auth", "Auth check", 61, "ok"],
+            ["checkout", "Checkout orchestration", 460, "warn"], ["orders", "Order write", 44, "ok"], ["billing", "Billing authorize retry x3", 2400, "bad"], ["events", "Publish checkout event", 182, "warn"]
+          ]
+        }
+      };
+
+      const logs = {
+        client: [["12:04.030", "info", "POST /checkout submitted session=s_882"], ["12:04.280", "warn", "client observed slow response 2.4s"]],
+        edge: [["12:04.041", "info", "route=/checkout upstream=checkout-api"], ["12:04.252", "warn", "upstream checkout exceeded route budget"]],
+        auth: [["12:04.060", "info", "token verified tenant=acme"], ["12:04.067", "info", "policy cache hit ttl=57s"]],
+        checkout: [["12:04.122", "warn", "orchestration latency p95=211ms"], ["12:04.188", "error", "dependency billing authorize timed out"], ["12:04.210", "warn", "retry scheduled attempt=2"]],
+        orders: [["12:04.142", "info", "order draft created id=o_9142"], ["12:04.150", "info", "transaction committed in 18ms"]],
+        billing: [["12:04.180", "error", "authorize timeout upstream=settlement"], ["12:04.411", "error", "retry exhausted attempts=3"], ["12:04.420", "warn", "circuit breaker half-open"]],
+        events: [["12:04.230", "warn", "event publish delayed queue_depth=18240"], ["12:04.255", "info", "event accepted topic=checkout.events"]]
+      };
+
+      const diagnosis = {
+        client: ["User impact starts as slow checkout submission.", "No local browser or network error identified."],
+        edge: ["Gateway is routing correctly but exposes customer-facing latency.", "Retry budget should be enforced before checkout fan-out."],
+        auth: ["Auth is not causal in this trace.", "Policy and token verification remain within budget."],
+        checkout: ["Checkout is the span where the request becomes unhealthy.", "Primary symptom: waits for billing and publishes delayed events."],
+        orders: ["Orders DB is healthy in this request.", "Write pressure is secondary when retry storms grow."],
+        billing: ["Billing is the fault location for this trace.", "Timeouts trigger retries and cause checkout orchestration to exceed SLO."],
+        events: ["Events queue receives delayed publish after checkout stalls.", "Consumer lag affects receipts but is not the root cause."]
+      };
+
+      let scenario = "degraded";
+      let selected = scenarios.degraded.selected;
+
+      function node(id) { return graph.find((item) => item.id === id); }
+      function center(item) { return { x: item.x + item.w / 2, y: item.y + item.h / 2 }; }
+      function activeIds() {
+        return new Set([selected, ...edges.filter(([from]) => from === selected).map(([, to]) => to), ...edges.filter(([, to]) => to === selected).map(([from]) => from)]);
+      }
+
+      function renderGraph() {
+        const active = activeIds();
+        document.getElementById("edges").innerHTML = edges.map(([from, to]) => {
+          const a = center(node(from));
+          const b = center(node(to));
+          const isActive = from === selected || to === selected;
+          const isError = [from, to].includes("billing") && scenario !== "normal";
+          return `<path class="flow-edge ${isActive ? "active" : ""} ${isError ? "error" : ""}" d="M ${a.x} ${a.y} C ${(a.x + b.x) / 2} ${a.y}, ${(a.x + b.x) / 2} ${b.y}, ${b.x} ${b.y}" marker-end="url(#arrow)"></path>`;
+        }).join("");
+
+        document.getElementById("nodes").innerHTML = graph.map((item) => {
+          const scenarioState = scenario === "normal" ? "ok" : item.state;
+          return `
+            <g class="svc ${scenarioState} ${item.id === selected ? "selected" : ""}" data-id="${item.id}" tabindex="0" role="button" aria-label="Select ${item.name}" opacity="${active.has(item.id) ? "1" : ".44"}">
+              <rect x="${item.x}" y="${item.y}" width="${item.w}" height="${item.h}" rx="11"></rect>
+              <text x="${item.x + 14}" y="${item.y + 25}">${item.name}</text>
+              <text class="sub" x="${item.x + 14}" y="${item.y + 43}">${item.sub}</text>
+            </g>
+          `;
+        }).join("");
+
+        document.querySelectorAll(".svc").forEach((el) => {
+          el.addEventListener("click", () => { selected = el.dataset.id; render(); });
+          el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selected = el.dataset.id; render(); }
+          });
+        });
+      }
+
+      function renderWaterfall() {
+        const spans = scenarios[scenario].spans;
+        const max = Math.max(...spans.map(([, , ms]) => ms));
+        document.getElementById("waterfall").innerHTML = spans.map(([id, label, ms, state]) => `
+          <button class="span-row ${id === selected ? "active" : ""}" type="button" data-id="${id}">
+            <strong>${label}</strong>
+            <span class="bar-track"><span class="bar ${state === "bad" ? "bad" : state === "warn" ? "warn" : ""}" style="width:${Math.max(8, (ms / max) * 100)}%"></span></span>
+            <span>${ms}ms</span>
+          </button>
+        `).join("");
+        document.querySelectorAll(".span-row").forEach((el) => el.addEventListener("click", () => { selected = el.dataset.id; render(); }));
+      }
+
+      function renderDetails() {
+        const item = node(selected);
+        const span = scenarios[scenario].spans.find(([id]) => id === selected);
+        document.getElementById("serviceName").textContent = item.name;
+        document.getElementById("serviceSub").textContent = `${item.sub} span - ${scenario}`;
+        document.getElementById("metrics").innerHTML = [
+          ["Span time", `${span[2]}ms`],
+          ["Status", span[3]],
+          ["Retries", selected === "billing" && scenario !== "normal" ? "3" : "0"]
+        ].map(([label, value]) => `<div class="metric"><small>${label}</small><strong>${value}</strong></div>`).join("");
+        document.getElementById("diagnosis").innerHTML = diagnosis[selected].map((text) => `<div>${text}</div>`).join("");
+        document.getElementById("logs").innerHTML = logs[selected].map(([time, level, text]) => `
+          <div class="log"><span>${time}</span><span class="${level}">${level}</span><span>${text}</span></div>
+        `).join("");
+      }
+
+      function render() {
+        renderGraph();
+        renderWaterfall();
+        renderDetails();
+        document.querySelectorAll(".scenario").forEach((button) => button.classList.toggle("active", button.dataset.scenario === scenario));
+      }
+
+      document.querySelectorAll(".scenario").forEach((button) => {
+        button.addEventListener("click", () => {
+          scenario = button.dataset.scenario;
+          selected = scenarios[scenario].selected;
+          render();
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>

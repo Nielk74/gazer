@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Gazer icon">
+  <defs>
+    <linearGradient id="g" x1="42" x2="214" y1="40" y2="216" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#49B6FF"/>
+      <stop offset="0.52" stop-color="#7C8CFF"/>
+      <stop offset="1" stop-color="#28D17C"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="54" fill="#090F1A"/>
+  <path fill="url(#g)" d="M128 51c48 0 83 29 102 77-19 48-54 77-102 77s-83-29-102-77c19-48 54-77 102-77Zm0 32c-27 0-48 20-48 45s21 45 48 45 48-20 48-45-21-45-48-45Z"/>
+  <circle cx="128" cy="128" r="26" fill="#EDF4FF"/>
+  <circle cx="128" cy="128" r="12" fill="#090F1A"/>
+  <path fill="#49B6FF" d="M61 198h134v18H61z" opacity=".9"/>
+</svg>

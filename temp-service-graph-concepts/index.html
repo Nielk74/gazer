@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gazer Graph UX Directions</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --text: #172033;
+        --muted: #637083;
+        --border: #d9e1ea;
+        --primary: #1f5eff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          linear-gradient(180deg, #e9eef6 0, transparent 360px),
+          var(--bg);
+      }
+
+      main {
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+
+      header {
+        max-width: 760px;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.6;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      a {
+        display: grid;
+        min-height: 300px;
+        padding: 24px;
+        color: inherit;
+        text-decoration: none;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 24px 70px rgba(25, 38, 64, 0.1);
+      }
+
+      a:hover,
+      a:focus-visible {
+        border-color: color-mix(in srgb, var(--primary), white 20%);
+        outline: none;
+        transform: translateY(-2px);
+      }
+
+      .number {
+        color: var(--primary);
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      h2 {
+        margin: auto 0 8px;
+        font-size: 25px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 22px;
+      }
+
+      span.tag {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef3ff;
+        color: #2751a3;
+        font-size: 13px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Three service graph UX directions</h1>
+        <p>
+          Each concept is a separate static prototype with a dynamic graph, selectable processes, error context,
+          dependency impact, and logs.
+        </p>
+      </header>
+
+      <section class="grid" aria-label="Graph UX concepts">
+        <a href="./01-incident-war-room.html">
+          <span class="number">01</span>
+          <h2>Incident War Room</h2>
+          <p>Real-time triage around blast radius, active errors, responders, and recovery decisions.</p>
+          <div class="meta"><span class="tag">Incident-first</span><span class="tag">Operational</span></div>
+        </a>
+
+        <a href="./02-architecture-radar.html">
+          <span class="number">02</span>
+          <h2>Architecture Radar</h2>
+          <p>System cartography for ownership, coupling, dependency health, and engineering review.</p>
+          <div class="meta"><span class="tag">Architecture</span><span class="tag">Exploratory</span></div>
+        </a>
+
+        <a href="./03-trace-flow-explorer.html">
+          <span class="number">03</span>
+          <h2>Trace Flow Explorer</h2>
+          <p>Request-journey tracing with spans, retries, logs, latency, and fault localization.</p>
+          <div class="meta"><span class="tag">Trace-first</span><span class="tag">Diagnostic</span></div>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

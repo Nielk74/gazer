@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gazer Concept 02 - Architecture Radar</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #f6f4ef;
+        --surface: #fffdf8;
+        --surface-2: #eee9df;
+        --text: #25231e;
+        --muted: #736f64;
+        --border: #d9d1c2;
+        --primary: #2f6f73;
+        --purple: #6554c0;
+        --warn: #b7791f;
+        --bad: #b7433f;
+        --ok: #4c8a5e;
+        --shadow: 0 22px 60px rgba(75, 62, 40, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-width: 1180px;
+        min-height: 780px;
+        color: var(--text);
+        background:
+          linear-gradient(90deg, rgba(47,111,115,.08) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(47,111,115,.08) 1px, transparent 1px),
+          var(--bg);
+        background-size: 34px 34px;
+      }
+      button { font: inherit; cursor: pointer; }
+      button:focus-visible, [role="button"]:focus-visible {
+        outline: 3px solid rgba(47, 111, 115, 0.35);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr) 360px;
+        gap: 18px;
+        height: 100vh;
+        padding: 18px;
+      }
+
+      .panel, .radar {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255,253,248,.96);
+        box-shadow: var(--shadow);
+      }
+
+      .panel {
+        min-height: 0;
+        overflow: hidden;
+        padding: 18px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; letter-spacing: 0; }
+      h1 { font-size: 28px; margin-bottom: 8px; line-height: 1.1; }
+      h2 { font-size: 18px; margin-bottom: 12px; }
+      h3 { font-size: 15px; margin-bottom: 8px; }
+      p, .muted, small { color: var(--muted); }
+
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        color: white;
+        background: var(--primary);
+        font-weight: 900;
+      }
+
+      .brand { display: flex; gap: 12px; align-items: center; }
+      .brand strong { display: block; font-size: 20px; }
+
+      .domain-list, .review-list, .logs {
+        display: grid;
+        gap: 10px;
+      }
+
+      .domain {
+        display: grid;
+        gap: 3px;
+        min-height: 64px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+
+      .domain strong {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .main {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 18px;
+        min-width: 0;
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 20px;
+      }
+
+      .top h1 { margin: 0; }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .toggle {
+        min-height: 38px;
+        padding: 0 11px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--muted);
+        background: var(--surface);
+        font-weight: 750;
+      }
+
+      .toggle.active {
+        color: #fff;
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .radar {
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+      }
+
+      svg { width: 100%; height: 100%; min-height: 620px; }
+
+      .ring {
+        fill: none;
+        stroke: var(--border);
+        stroke-width: 1.4;
+      }
+
+      .axis {
+        stroke: var(--border);
+        stroke-width: 1;
+      }
+
+      .edge {
+        fill: none;
+        stroke: rgba(47, 111, 115, 0.32);
+        stroke-width: 2.2;
+      }
+
+      .edge.active {
+        stroke: var(--primary);
+        stroke-width: 4;
+      }
+
+      .edge.risk {
+        stroke: var(--warn);
+      }
+
+      .node circle {
+        fill: var(--surface);
+        stroke: var(--primary);
+        stroke-width: 2;
+      }
+
+      .node text {
+        fill: var(--text);
+        font-size: 12px;
+        font-weight: 800;
+        pointer-events: none;
+      }
+
+      .node.selected circle {
+        stroke: var(--purple);
+        stroke-width: 4;
+        fill: #eeeafd;
+      }
+
+      .node.warn circle { stroke: var(--warn); fill: #fff5dd; }
+      .node.bad circle { stroke: var(--bad); fill: #fff0ee; }
+
+      .label {
+        fill: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .detail-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .badge {
+        padding: 5px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .badge.bad { color: var(--bad); border-color: rgba(183,67,63,.38); }
+      .badge.warn { color: var(--warn); border-color: rgba(183,121,31,.38); }
+      .badge.ok { color: var(--ok); border-color: rgba(76,138,94,.38); }
+
+      .score-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 14px 0;
+      }
+
+      .score {
+        padding: 12px;
+        min-height: 76px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+      }
+
+      .score strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 24px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .review {
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+
+      .log {
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr);
+        gap: 10px;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="panel nav">
+        <div class="brand">
+          <div class="mark">A</div>
+          <div>
+            <strong>Architecture Radar</strong>
+            <small>System cartography</small>
+          </div>
+        </div>
+        <p>Map process ownership, coupling, operational risk, and dependency contracts in one engineering review surface.</p>
+        <section>
+          <h2>Domains</h2>
+          <div class="domain-list" id="domains"></div>
+        </section>
+        <section>
+          <h2>Review Queue</h2>
+          <div class="review-list">
+            <div class="review"><strong>Billing dependency review</strong><br><small>Consumer failures are amplifying checkout retries.</small></div>
+            <div class="review"><strong>Queue ownership boundary</strong><br><small>Events queue is shared by four domains.</small></div>
+            <div class="review"><strong>Gateway contract cleanup</strong><br><small>Three endpoints still use legacy retries.</small></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="main">
+        <header class="panel top">
+          <div>
+            <h1>Production architecture health</h1>
+            <p class="muted">Select a process to inspect coupling, ownership, dependency health, and recent operational evidence.</p>
+          </div>
+          <div class="controls">
+            <button class="toggle active" data-layer="risk">Risk layer</button>
+            <button class="toggle" data-layer="ownership">Ownership</button>
+            <button class="toggle" data-layer="contracts">Contracts</button>
+          </div>
+        </header>
+
+        <section class="radar">
+          <svg viewBox="0 0 920 660" role="img" aria-label="Architecture radar service graph">
+            <g transform="translate(460 330)">
+              <circle class="ring" r="260"></circle>
+              <circle class="ring" r="185"></circle>
+              <circle class="ring" r="110"></circle>
+              <line class="axis" x1="-300" y1="0" x2="300" y2="0"></line>
+              <line class="axis" x1="0" y1="-300" x2="0" y2="300"></line>
+              <text class="label" x="-286" y="-10">Edge</text>
+              <text class="label" x="218" y="-10">Data</text>
+              <text class="label" x="10" y="-282">Commerce</text>
+              <text class="label" x="10" y="292">Platform</text>
+            </g>
+            <g id="edges"></g>
+            <g id="nodes"></g>
+          </svg>
+        </section>
+      </section>
+
+      <aside class="panel">
+        <div class="detail-head">
+          <div>
+            <h2 id="name">Checkout API</h2>
+            <p class="muted" id="owner">commerce team</p>
+          </div>
+          <span class="badge warn" id="state">review</span>
+        </div>
+        <div class="score-grid" id="scores"></div>
+        <h3>Dependency Notes</h3>
+        <div class="review-list" id="notes"></div>
+        <h3 style="margin-top:16px">Events and Logs</h3>
+        <div class="logs" id="logs"></div>
+      </aside>
+    </main>
+
+    <script>
+      const nodes = [
+        { id: "gateway", name: "Gateway", domain: "Edge", owner: "platform", state: "ok", x: 188, y: 330, coupling: 61, deps: 3, contracts: 8, changes: 1 },
+        { id: "auth", name: "Auth", domain: "Identity", owner: "identity", state: "ok", x: 350, y: 210, coupling: 38, deps: 2, contracts: 5, changes: 0 },
+        { id: "checkout", name: "Checkout", domain: "Commerce", owner: "commerce", state: "warn", x: 466, y: 166, coupling: 82, deps: 5, contracts: 11, changes: 2 },
+        { id: "catalog", name: "Catalog", domain: "Commerce", owner: "merch", state: "ok", x: 365, y: 460, coupling: 47, deps: 3, contracts: 7, changes: 1 },
+        { id: "orders", name: "Orders DB", domain: "Data", owner: "data", state: "ok", x: 634, y: 220, coupling: 58, deps: 3, contracts: 4, changes: 0 },
+        { id: "billing", name: "Billing", domain: "Payments", owner: "payments", state: "bad", x: 690, y: 342, coupling: 76, deps: 4, contracts: 9, changes: 1 },
+        { id: "events", name: "Events", domain: "Platform", owner: "platform", state: "warn", x: 548, y: 500, coupling: 88, deps: 6, contracts: 13, changes: 0 },
+        { id: "notify", name: "Notify", domain: "Engage", owner: "engage", state: "ok", x: 732, y: 474, coupling: 31, deps: 1, contracts: 3, changes: 0 }
+      ];
+
+      const links = [
+        ["gateway", "auth"], ["gateway", "checkout"], ["gateway", "catalog"],
+        ["checkout", "orders"], ["checkout", "billing"], ["checkout", "events"],
+        ["catalog", "events"], ["billing", "events"], ["events", "notify"]
+      ];
+
+      const evidence = {
+        gateway: ["Legacy retry policy still enabled for checkout route.", "Owner: platform. No current SLO breach."],
+        auth: ["No contract drift detected.", "Token cache is isolated from checkout incident."],
+        checkout: ["High coupling: depends on billing, orders, events, auth, gateway.", "Recommended: define degraded payment mode and retry budget."],
+        catalog: ["Healthy but shares event stream with checkout.", "Low customer risk during current incident."],
+        orders: ["Pool pressure comes from checkout retry bursts.", "Contract stable but capacity guardrails need review."],
+        billing: ["Root-cause candidate: worker replicas at zero.", "Payments contract should fail fast instead of timing out."],
+        events: ["Shared queue creates cross-domain coupling.", "Lag is secondary impact from billing consumer failure."],
+        notify: ["Downstream notification delays only.", "No architectural remediation required today."]
+      };
+
+      const logLines = {
+        gateway: [["12:05", "route checkout returned 503 upstream=checkout"], ["12:03", "contract gateway.checkout v2 healthy"]],
+        auth: [["12:04", "token verification p95=63ms"], ["12:00", "identity contract unchanged"]],
+        checkout: [["12:05", "contract billing.authorize timed out"], ["12:04", "retry budget exceeded dependency=billing"], ["12:02", "orders connection pressure rising"]],
+        catalog: [["12:03", "catalog contract served normally"], ["11:58", "cache hit ratio 94%"]],
+        orders: [["12:05", "connection pool active=92 idle=4"], ["12:01", "replica lag below threshold"]],
+        billing: [["12:05", "worker unavailable replicas=0"], ["12:04", "settlement queue retry exhausted"]],
+        events: [["12:05", "queue depth 18240 consumer lag 6.4s"], ["12:03", "billing-events consumer stalled"]],
+        notify: [["12:04", "receipt dispatch delayed source=events"], ["12:01", "provider health normal"]]
+      };
+
+      let selected = "checkout";
+      let layer = "risk";
+
+      function node(id) { return nodes.find((item) => item.id === id); }
+      function related(id) {
+        return new Set([id, ...links.filter(([from]) => from === id).map(([, to]) => to), ...links.filter(([, to]) => to === id).map(([from]) => from)]);
+      }
+
+      function renderDomains() {
+        const groups = [...new Set(nodes.map((item) => item.domain))];
+        document.getElementById("domains").innerHTML = groups.map((domain) => {
+          const count = nodes.filter((item) => item.domain === domain).length;
+          const risk = nodes.filter((item) => item.domain === domain && item.state !== "ok").length;
+          return `<button class="domain" type="button"><strong>${domain}<span>${count}</span></strong><small>${risk ? `${risk} review item` : "stable"}</small></button>`;
+        }).join("");
+      }
+
+      function renderGraph() {
+        const rel = related(selected);
+        document.getElementById("edges").innerHTML = links.map(([from, to]) => {
+          const a = node(from), b = node(to);
+          const active = from === selected || to === selected;
+          const risk = [a.state, b.state].includes("bad") || [a.state, b.state].includes("warn");
+          return `<path class="edge ${active ? "active" : ""} ${risk && layer === "risk" ? "risk" : ""}" d="M ${a.x} ${a.y} C ${(a.x + b.x) / 2} ${a.y}, ${(a.x + b.x) / 2} ${b.y}, ${b.x} ${b.y}"></path>`;
+        }).join("");
+
+        document.getElementById("nodes").innerHTML = nodes.map((item) => {
+          const active = item.id === selected;
+          const visible = rel.has(item.id);
+          const label = layer === "ownership" ? item.owner : layer === "contracts" ? `${item.contracts} contracts` : `${item.coupling} coupling`;
+          return `
+            <g class="node ${item.state} ${active ? "selected" : ""}" role="button" tabindex="0" data-id="${item.id}" opacity="${visible ? "1" : ".42"}">
+              <circle cx="${item.x}" cy="${item.y}" r="${active ? 36 : 29}"></circle>
+              <text x="${item.x}" y="${item.y + 4}" text-anchor="middle">${item.name}</text>
+              <text x="${item.x}" y="${item.y + 54}" text-anchor="middle" class="label">${label}</text>
+            </g>
+          `;
+        }).join("");
+
+        document.querySelectorAll(".node").forEach((el) => {
+          el.addEventListener("click", () => { selected = el.dataset.id; render(); });
+          el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selected = el.dataset.id; render(); }
+          });
+        });
+      }
+
+      function renderDetails() {
+        const item = node(selected);
+        document.getElementById("name").textContent = item.name;
+        document.getElementById("owner").textContent = `${item.owner} team - ${item.domain}`;
+        const state = document.getElementById("state");
+        state.className = `badge ${item.state}`;
+        state.textContent = item.state === "bad" ? "critical" : item.state === "warn" ? "review" : "healthy";
+        document.getElementById("scores").innerHTML = [
+          ["Coupling", item.coupling],
+          ["Dependencies", item.deps],
+          ["Contracts", item.contracts],
+          ["Open changes", item.changes]
+        ].map(([label, value]) => `<div class="score"><small>${label}</small><strong>${value}</strong></div>`).join("");
+        document.getElementById("notes").innerHTML = evidence[item.id].map((text) => `<div class="review">${text}</div>`).join("");
+        document.getElementById("logs").innerHTML = logLines[item.id].map(([time, text]) => `<div class="log"><span>${time}</span><span>${text}</span></div>`).join("");
+      }
+
+      function render() {
+        renderGraph();
+        renderDetails();
+        document.querySelectorAll(".toggle").forEach((button) => button.classList.toggle("active", button.dataset.layer === layer));
+      }
+
+      document.querySelectorAll(".toggle").forEach((button) => {
+        button.addEventListener("click", () => { layer = button.dataset.layer; render(); });
+      });
+
+      renderDomains();
+      render();
+    </script>
+  </body>
+</html>

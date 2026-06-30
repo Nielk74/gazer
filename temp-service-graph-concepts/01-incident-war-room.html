@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gazer Concept 01 - Incident War Room</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #101418;
+        --surface: #171d23;
+        --surface-2: #1f2730;
+        --surface-3: #26313b;
+        --text: #f2f5f7;
+        --muted: #9da9b5;
+        --border: #34414d;
+        --primary: #8ab4f8;
+        --ok: #5bc487;
+        --warn: #e5b454;
+        --bad: #ee6b73;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 1180px;
+        min-height: 780px;
+        color: var(--text);
+        background: linear-gradient(180deg, #171d23 0, var(--bg) 340px);
+      }
+
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+      button:focus-visible, [role="button"]:focus-visible {
+        outline: 3px solid rgba(138, 180, 248, 0.55);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 16px;
+        height: 100vh;
+        padding: 18px;
+      }
+
+      .topbar, .panel, .graph-wrap {
+        border: 1px solid var(--border);
+        background: rgba(23, 29, 35, 0.94);
+        box-shadow: var(--shadow);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 86px;
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        color: #111820;
+        background: var(--primary);
+        font-weight: 900;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 4px; font-size: 25px; letter-spacing: 0; }
+      h2 { margin-bottom: 10px; font-size: 17px; letter-spacing: 0; }
+      h3 { margin-bottom: 8px; font-size: 15px; letter-spacing: 0; }
+      p, .muted, small { color: var(--muted); }
+
+      .status-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface-2);
+        color: var(--text);
+        font-weight: 750;
+      }
+
+      .chip.bad { color: var(--bad); border-color: rgba(238, 107, 115, 0.45); }
+      .chip.warn { color: var(--warn); border-color: rgba(229, 180, 84, 0.45); }
+      .chip.ok { color: var(--ok); border-color: rgba(91, 196, 135, 0.45); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr) 360px;
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .panel {
+        min-height: 0;
+        overflow: hidden;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 12px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .event {
+        position: relative;
+        display: grid;
+        gap: 5px;
+        padding: 13px 13px 13px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+      }
+
+      .event::before {
+        content: "";
+        position: absolute;
+        left: -1px;
+        top: 12px;
+        bottom: 12px;
+        width: 4px;
+        border-radius: 99px;
+        background: var(--warn);
+      }
+
+      .event.bad::before { background: var(--bad); }
+      .event.ok::before { background: var(--ok); }
+
+      .event strong {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 14px;
+      }
+
+      .graph-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        min-height: 0;
+      }
+
+      .graph-toolbar {
+        position: absolute;
+        z-index: 2;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        pointer-events: none;
+      }
+
+      .graph-toolbar > * { pointer-events: auto; }
+
+      .mode-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mode {
+        min-height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--muted);
+        background: var(--surface-2);
+      }
+
+      .mode.active {
+        color: var(--text);
+        border-color: rgba(138, 180, 248, 0.7);
+        background: #253140;
+      }
+
+      svg {
+        width: 100%;
+        height: 100%;
+        min-height: 620px;
+      }
+
+      .edge {
+        fill: none;
+        stroke: #566575;
+        stroke-width: 2.4;
+        opacity: 0.42;
+      }
+
+      .edge.active { opacity: 1; stroke-width: 4; }
+      .edge.downstream { stroke: var(--primary); }
+      .edge.incident { stroke: var(--bad); }
+
+      .node rect {
+        fill: var(--surface-2);
+        stroke: var(--border);
+        stroke-width: 1.4;
+      }
+
+      .node text {
+        fill: var(--text);
+        font-size: 13px;
+        font-weight: 800;
+        pointer-events: none;
+      }
+
+      .node .sub {
+        fill: var(--muted);
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .node.selected rect {
+        stroke: var(--primary);
+        stroke-width: 3;
+      }
+
+      .node.affected rect {
+        stroke: var(--warn);
+        fill: #302a1d;
+      }
+
+      .node.failing rect {
+        stroke: var(--bad);
+        fill: #332226;
+      }
+
+      .detail-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .severity {
+        min-height: 30px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .severity.bad { color: var(--bad); border-color: rgba(238, 107, 115, 0.45); }
+      .severity.warn { color: var(--warn); border-color: rgba(229, 180, 84, 0.45); }
+      .severity.ok { color: var(--ok); border-color: rgba(91, 196, 135, 0.45); }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 14px 0;
+      }
+
+      .metric {
+        min-height: 76px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface-2);
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 23px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .impact-list, .logs {
+        display: grid;
+        gap: 8px;
+      }
+
+      .impact-list div, .log {
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-2);
+      }
+
+      .log {
+        display: grid;
+        grid-template-columns: 62px 54px minmax(0, 1fr);
+        gap: 8px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .log .error { color: var(--bad); }
+      .log .warn { color: var(--warn); }
+      .log .info { color: var(--primary); }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .action {
+        min-height: 42px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        background: var(--surface-3);
+        font-weight: 800;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">G</div>
+          <div>
+            <h1>Incident War Room</h1>
+            <p class="muted">Dependency graph built for triage, blast radius, active responders, and recovery decisions.</p>
+          </div>
+        </div>
+        <div class="status-row">
+          <span class="chip bad">SEV-1 checkout degradation</span>
+          <span class="chip warn">12.4k rpm at risk</span>
+          <span class="chip ok">3 responders online</span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <aside class="panel">
+          <h2>Incident Timeline</h2>
+          <div class="timeline" id="timeline"></div>
+        </aside>
+
+        <section class="graph-wrap">
+          <div class="graph-toolbar">
+            <div>
+              <h2>Production impact map</h2>
+              <p class="muted">Select any process to isolate upstream and downstream risk.</p>
+            </div>
+            <div class="mode-group" aria-label="Graph modes">
+              <button class="mode active" data-mode="impact">Impact</button>
+              <button class="mode" data-mode="errors">Errors</button>
+              <button class="mode" data-mode="recovery">Recovery</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 960 640" role="img" aria-label="Service dependency graph">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#8ab4f8"></path>
+              </marker>
+            </defs>
+            <g id="edges"></g>
+            <g id="nodes"></g>
+          </svg>
+        </section>
+
+        <aside class="panel">
+          <div class="detail-head">
+            <div>
+              <h2 id="serviceName">Checkout API</h2>
+              <p class="muted" id="serviceOwner">commerce platform</p>
+            </div>
+            <span class="severity bad" id="serviceSeverity">critical</span>
+          </div>
+          <div class="metrics" id="metrics"></div>
+          <h3>Impact</h3>
+          <div class="impact-list" id="impact"></div>
+          <div class="actions">
+            <button class="action">Open runbook</button>
+            <button class="action">Page owner</button>
+          </div>
+          <h3 style="margin-top:16px">Correlated Logs</h3>
+          <div class="logs" id="logs"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const services = [
+        { id: "edge", name: "Edge Gateway", owner: "platform", status: "ok", x: 70, y: 276, w: 140, h: 64, latency: "41ms", errors: "0.02%", replicas: "8", impact: ["Routes 42.8k rpm", "No local errors"] },
+        { id: "auth", name: "Auth API", owner: "identity", status: "ok", x: 286, y: 106, w: 126, h: 60, latency: "63ms", errors: "0.08%", replicas: "4", impact: ["Token checks normal", "Adds 63ms to checkout"] },
+        { id: "checkout", name: "Checkout API", owner: "commerce", status: "failing", x: 300, y: 280, w: 150, h: 68, latency: "211ms", errors: "1.27%", replicas: "6", impact: ["Primary degraded service", "Payment flow retries rising", "Cart conversion impacted"] },
+        { id: "catalog", name: "Catalog API", owner: "merch", status: "ok", x: 296, y: 462, w: 134, h: 60, latency: "74ms", errors: "0.11%", replicas: "3", impact: ["Search and item data healthy"] },
+        { id: "orders", name: "Orders DB", owner: "data", status: "affected", x: 588, y: 120, w: 132, h: 60, latency: "18ms", errors: "0.00%", replicas: "3", impact: ["Write pressure +28%", "Connection pool near limit"] },
+        { id: "billing", name: "Billing Worker", owner: "payments", status: "failing", x: 596, y: 298, w: 150, h: 68, latency: "timeout", errors: "14.8%", replicas: "0", impact: ["Root-cause candidate", "Settlement jobs stalled", "Retries amplify checkout"] },
+        { id: "events", name: "Events Queue", owner: "platform", status: "affected", x: 606, y: 480, w: 138, h: 60, latency: "8ms", errors: "0.00%", replicas: "2", impact: ["Depth increased to 18.2k", "Consumer lag 6.4s"] },
+        { id: "notify", name: "Notifier", owner: "engage", status: "ok", x: 790, y: 416, w: 118, h: 56, latency: "48ms", errors: "0.04%", replicas: "2", impact: ["Receipts delayed when queue lag grows"] }
+      ];
+
+      const links = [
+        ["edge", "auth"], ["edge", "checkout"], ["edge", "catalog"],
+        ["checkout", "orders"], ["checkout", "billing"], ["checkout", "events"],
+        ["catalog", "events"], ["billing", "events"], ["events", "notify"]
+      ];
+
+      const logs = {
+        edge: [["12:04", "info", "route=/checkout status=503 upstream=checkout-api"], ["12:03", "info", "rate limit normal bucket=public-api"], ["12:02", "warn", "upstream p95 crossed 200ms"]],
+        auth: [["12:04", "info", "jwt verification ok issuer=primary"], ["12:01", "info", "cache hit tenant-policy ttl=52s"], ["11:58", "info", "key rotation completed"]],
+        checkout: [["12:05", "error", "payment authorization failed dependency=billing"], ["12:04", "warn", "retry storm detected attempts=3"], ["12:03", "error", "cart submit p95=211ms error_rate=1.27"]],
+        catalog: [["12:04", "info", "catalog snapshot served revision=8842"], ["12:01", "info", "search index warm"], ["11:58", "info", "cache hit ratio=94%"]],
+        orders: [["12:05", "warn", "connection pool active=92 idle=4"], ["12:03", "info", "write latency p95=18ms"], ["12:00", "info", "replica lag normal"]],
+        billing: [["12:05", "error", "worker unavailable replicas=0"], ["12:04", "error", "settlement queue retry exhausted"], ["12:02", "warn", "pod restarted reason=OOMKilled"]],
+        events: [["12:05", "warn", "queue depth=18240 consumer_lag=6.4s"], ["12:03", "info", "topic checkout.events receiving"], ["12:01", "warn", "consumer billing-events stalled"]],
+        notify: [["12:04", "info", "receipt dispatch delayed source=events"], ["12:02", "info", "sms provider healthy"], ["11:59", "info", "email provider healthy"]]
+      };
+
+      const timeline = [
+        ["12:05", "bad", "Billing replicas dropped to zero", "Checkout retries now account for 34% of payment calls."],
+        ["12:04", "bad", "Checkout error rate crossed 1%", "Gateway shows customer-facing 503 spikes."],
+        ["12:03", "warn", "Orders pool pressure detected", "Write traffic from checkout retries increased."],
+        ["12:01", "warn", "Events queue depth rising", "Consumer lag passed the warning threshold."],
+        ["11:58", "ok", "Deploy marker received", "Revision 2026.06.29-1 deployed to checkout-api."]
+      ];
+
+      let selected = "checkout";
+      let mode = "impact";
+
+      function service(id) { return services.find((item) => item.id === id); }
+      function center(item) { return { x: item.x + item.w / 2, y: item.y + item.h / 2 }; }
+      function related(id) {
+        const down = links.filter(([from]) => from === id).map(([, to]) => to);
+        const up = links.filter(([, to]) => to === id).map(([from]) => from);
+        return { down, up, all: new Set([id, ...down, ...up]) };
+      }
+      function path(from, to) {
+        const a = center(service(from));
+        const b = center(service(to));
+        const bend = Math.max(70, Math.abs(b.x - a.x) * 0.42);
+        return `M ${a.x} ${a.y} C ${a.x + bend} ${a.y}, ${b.x - bend} ${b.y}, ${b.x} ${b.y}`;
+      }
+
+      function renderTimeline() {
+        document.getElementById("timeline").innerHTML = timeline.map(([time, state, title, body]) => `
+          <div class="event ${state}">
+            <strong><span>${title}</span><span>${time}</span></strong>
+            <small>${body}</small>
+          </div>
+        `).join("");
+      }
+
+      function renderGraph() {
+        const rel = related(selected);
+        document.getElementById("edges").innerHTML = links.map(([from, to]) => {
+          const active = from === selected || to === selected;
+          const incident = ["checkout", "billing", "events"].includes(from) && ["billing", "events", "notify", "orders"].includes(to);
+          const klass = active ? "active downstream" : mode === "errors" && incident ? "active incident" : "";
+          return `<path class="edge ${klass}" d="${path(from, to)}" marker-end="url(#arrow)"></path>`;
+        }).join("");
+
+        document.getElementById("nodes").innerHTML = services.map((item) => {
+          const selectedClass = item.id === selected ? "selected" : "";
+          const relationClass = rel.all.has(item.id) ? item.status : "";
+          return `
+            <g class="node ${item.status} ${relationClass} ${selectedClass}" tabindex="0" role="button" data-id="${item.id}" aria-label="Select ${item.name}">
+              <rect x="${item.x}" y="${item.y}" width="${item.w}" height="${item.h}" rx="10"></rect>
+              <text x="${item.x + 16}" y="${item.y + 27}">${item.name}</text>
+              <text class="sub" x="${item.x + 16}" y="${item.y + 47}">${item.owner} - ${item.errors}</text>
+            </g>
+          `;
+        }).join("");
+
+        document.querySelectorAll(".node").forEach((node) => {
+          node.addEventListener("click", () => { selected = node.dataset.id; render(); });
+          node.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selected = node.dataset.id; render(); }
+          });
+        });
+      }
+
+      function renderDetails() {
+        const item = service(selected);
+        const rel = related(selected);
+        const sev = item.status === "failing" ? "bad" : item.status === "affected" ? "warn" : "ok";
+        document.getElementById("serviceName").textContent = item.name;
+        document.getElementById("serviceOwner").textContent = `${item.owner} team`;
+        const severity = document.getElementById("serviceSeverity");
+        severity.className = `severity ${sev}`;
+        severity.textContent = item.status === "failing" ? "critical" : item.status === "affected" ? "at risk" : "healthy";
+        document.getElementById("metrics").innerHTML = [
+          ["Latency", item.latency],
+          ["Errors", item.errors],
+          ["Replicas", item.replicas],
+          ["Links", `${rel.up.length} in / ${rel.down.length} out`]
+        ].map(([label, value]) => `<div class="metric"><small>${label}</small><strong>${value}</strong></div>`).join("");
+        document.getElementById("impact").innerHTML = item.impact.map((line) => `<div>${line}</div>`).join("");
+        document.getElementById("logs").innerHTML = logs[item.id].map(([time, level, message]) => `
+          <div class="log"><span>${time}</span><span class="${level}">${level}</span><span>${message}</span></div>
+        `).join("");
+      }
+
+      function render() {
+        renderGraph();
+        renderDetails();
+        document.querySelectorAll(".mode").forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+      }
+
+      document.querySelectorAll(".mode").forEach((button) => {
+        button.addEventListener("click", () => { mode = button.dataset.mode; render(); });
+      });
+
+      renderTimeline();
+      render();
+    </script>
+  </body>
+</html>
