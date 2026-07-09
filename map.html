@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Booking Network — System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Oswald:wght@300;400;500;600&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ECE3D0;
+  --paper-2:#E5DABF;
+  --paper-3:#DBCEAD;
+  --paper-hi:#F7F0DE;
+  --ink:#2B2620;
+  --ink-2:#5F5647;
+  --ink-3:#8C806A;
+  --rule:#C6B693;
+  --rule-2:#B4A176;
+  --l-bond:#2E6E8E;
+  --l-swap:#4E7A44;
+  --l-opt:#844E6E;
+  --l-fx:#BD852A;
+  --l-fail:#A6402F;
+  --l-mon:#2F7E77;
+  --l-fover:#6B5BA6;
+  --accent:#A6402F;
+  --font-display:"Fraunces",Georgia,serif;
+  --font-label:"Oswald",sans-serif;
+  --font-body:"Archivo",system-ui,sans-serif;
+  --font-mono:"Space Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:
+    radial-gradient(140% 120% at 50% 0%, rgba(255,251,240,.5), transparent 55%),
+    radial-gradient(120% 120% at 50% 100%, rgba(70,55,30,.14), transparent 60%),
+    var(--paper);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.55;
+}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{position:relative;z-index:2;max-width:1500px;margin:0 auto;padding:28px 26px 40px}
+
+/* ---------- Masthead ---------- */
+.mast{border:2px solid var(--ink);padding:6px;margin-bottom:22px;background:var(--paper-2)}
+.mast-in{border:1px solid var(--rule-2);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.mast .eyebrow{font-family:var(--font-label);text-transform:uppercase;letter-spacing:.42em;font-size:11px;
+  color:var(--ink-2);font-weight:500}
+.mast h1{font-family:var(--font-display);font-weight:900;font-size:clamp(34px,5vw,58px);line-height:.95;
+  margin:8px 0 6px;letter-spacing:-.01em;font-optical-sizing:auto}
+.mast .tag{font-family:var(--font-display);font-style:italic;font-weight:500;color:var(--ink-2);
+  font-size:clamp(14px,1.6vw,17px);max-width:520px}
+.stamp{text-align:center;flex:none;border:1.5px solid var(--ink);border-radius:50%;width:118px;height:118px;
+  display:grid;place-content:center;transform:rotate(-7deg);color:var(--ink);padding:8px}
+.stamp .s1{font-family:var(--font-label);font-size:9px;letter-spacing:.24em;text-transform:uppercase}
+.stamp .s2{font-family:var(--font-display);font-weight:900;font-size:15px;line-height:1;margin:4px 0}
+.stamp .rule{height:1px;background:var(--ink);margin:4px 6px;opacity:.5}
+
+/* ---------- Controls ---------- */
+.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;margin-bottom:20px}
+.panel{border:1.5px solid var(--ink);background:var(--paper-2);padding:5px}
+.panel-in{border:1px solid var(--rule-2);padding:14px 16px;height:100%}
+.panel-title{font-family:var(--font-label);text-transform:uppercase;letter-spacing:.2em;font-size:11px;
+  font-weight:600;color:var(--ink-2);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.panel-title::before{content:"";width:14px;height:2px;background:var(--accent)}
+
+.lines-panel{flex:1;min-width:280px}
+.roundels{display:flex;gap:10px;flex-wrap:wrap}
+.roundel{cursor:pointer;border:0;background:transparent;padding:0;display:flex;flex-direction:column;
+  align-items:center;gap:6px;width:62px;font-family:var(--font-label)}
+.roundel .disc{width:34px;height:34px;border-radius:50%;border:4px solid var(--c);background:var(--paper-hi);
+  display:grid;place-content:center;font-weight:600;font-size:13px;color:var(--ink);transition:.18s}
+.roundel .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:500}
+.roundel[aria-pressed="true"] .disc{background:var(--c);color:var(--paper-hi);transform:scale(1.06)}
+.roundel[aria-pressed="true"] .lbl{color:var(--ink);font-weight:600}
+.roundel:focus-visible .disc{outline:2px solid var(--ink);outline-offset:3px}
+
+.layers-panel{flex:1.3;min-width:340px}
+.switches{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw .track{width:38px;height:20px;border-radius:11px;background:var(--paper-3);border:1.5px solid var(--rule-2);
+  position:relative;flex:none;transition:.18s}
+.sw .track::after{content:"";position:absolute;top:1.5px;left:1.5px;width:14px;height:14px;border-radius:50%;
+  background:var(--ink-3);transition:.18s}
+.sw input:checked + .track{background:color-mix(in srgb,var(--c) 30%,var(--paper-3));border-color:var(--c)}
+.sw input:checked + .track::after{transform:translateX(18px);background:var(--c)}
+.sw input:focus-visible + .track{outline:2px solid var(--ink);outline-offset:2px}
+.sw .txt{font-family:var(--font-label);font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--ink);font-weight:500;line-height:1.15}
+.sw .txt small{display:block;font-family:var(--font-body);text-transform:none;letter-spacing:0;
+  font-size:10.5px;color:var(--ink-3);font-weight:400}
+
+/* ---------- Map ---------- */
+.map-frame{border:2px solid var(--ink);padding:8px;background:var(--paper-2);position:relative}
+.map-in{border:1px solid var(--rule-2);background:
+  linear-gradient(var(--rule) 1px,transparent 1px) 0 0/40px 40px,
+  linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/40px 40px,
+  var(--paper);
+  background-blend-mode:soft-light;position:relative;overflow-x:auto}
+.map-in::before,.map-in::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--ink);z-index:3;pointer-events:none}
+.map-in::before{top:8px;left:8px;border-right:0;border-bottom:0}
+.map-in::after{bottom:8px;right:8px;border-left:0;border-top:0}
+svg.map{display:block;width:100%;min-width:1120px;height:auto}
+.corner-tr,.corner-bl{position:absolute;width:16px;height:16px;border:2px solid var(--ink);z-index:3;pointer-events:none}
+.corner-tr{top:8px;right:8px;border-left:0;border-bottom:0}
+.corner-bl{bottom:8px;left:8px;border-right:0;border-top:0}
+.map-caption{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-family:var(--font-label);
+  text-transform:uppercase;letter-spacing:.34em;font-size:10px;color:var(--ink-3);z-index:3;white-space:nowrap}
+
+.pline{fill:none;stroke-linejoin:round;stroke-linecap:round;transition:opacity .25s}
+.pline.faded{opacity:.1}
+.station{cursor:pointer}
+.station .hit{fill:transparent}
+.station text{font-family:var(--font-label);font-weight:500;text-transform:uppercase;letter-spacing:.04em;
+  fill:var(--ink);transition:opacity .25s}
+.station .marker{transition:transform .18s,opacity .25s}
+.station.faded{opacity:.12}
+.station.sel .marker{transform:scale(1.28)}
+.layer-g{transition:opacity .35s}
+.layer-off{opacity:0;pointer-events:none}
+.mlink{transition:opacity .35s}
+.station:focus-visible{outline:none}
+.station:focus-visible .marker{transform:scale(1.28)}
+
+/* ---------- Footer row: legend + detail ---------- */
+.row{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;margin-top:22px}
+.key dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 12px;align-items:center}
+.key dt{display:flex;align-items:center;justify-content:center}
+.key dd{margin:0;font-size:13px;color:var(--ink-2)}
+.key dd b{color:var(--ink);font-weight:600}
+.swatch-line{width:34px;height:5px;border-radius:3px}
+.mk{width:22px;height:22px;display:grid;place-content:center}
+.key .sub{font-size:12px;color:var(--ink-3);margin:16px 0 0;border-top:1px solid var(--rule);padding-top:12px;font-style:italic;font-family:var(--font-display)}
+
+.file-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:1.5px solid var(--rule-2)}
+.file-disc{width:44px;height:44px;border-radius:50%;flex:none;border:4px solid var(--ink);background:var(--paper-hi)}
+.file-head h3{font-family:var(--font-display);font-weight:600;font-size:23px;margin:0;line-height:1.05}
+.file-head .role{font-family:var(--font-label);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;
+  color:var(--accent);font-weight:600;margin-top:6px}
+.file-desc{font-size:14.5px;color:var(--ink);margin:0 0 16px;line-height:1.6}
+.file-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field span{display:block;font-family:var(--font-label);text-transform:uppercase;letter-spacing:.12em;
+  font-size:10px;color:var(--ink-3);font-weight:500;margin-bottom:5px}
+.field p{margin:0;font-size:13px;color:var(--ink-2)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-family:var(--font-label);text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;
+  padding:2px 9px;border-radius:11px;color:var(--paper-hi);font-weight:500}
+.qname{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);display:block}
+.file-empty{text-align:center;color:var(--ink-3);padding:26px 10px}
+.file-empty .big{font-family:var(--font-display);font-style:italic;font-size:19px;color:var(--ink-2);margin-bottom:8px}
+
+footer{margin-top:26px;text-align:center;font-family:var(--font-label);text-transform:uppercase;
+  letter-spacing:.28em;font-size:10px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:16px}
+
+@media (max-width:820px){
+  .row{grid-template-columns:1fr}
+  .switches{grid-template-columns:1fr}
+  .mast-in{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="wrap">
+
+  <!-- MASTHEAD -->
+  <header class="mast">
+    <div class="mast-in">
+      <div>
+        <div class="eyebrow">Booking Operations · System Map</div>
+        <h1>The Booking Network</h1>
+        <div class="tag">A line map of the trade booking system — how every deal travels, from feed to export.</div>
+      </div>
+      <div class="stamp">
+        <div class="s1">Booking Transit</div>
+        <div class="rule"></div>
+        <div class="s2">EDITION<br>MMXXVI</div>
+        <div class="rule"></div>
+        <div class="s1">Sheet I</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="panel lines-panel">
+      <div class="panel-in">
+        <p class="panel-title">Follow a line</p>
+        <div class="roundels" id="roundels">
+          <button class="roundel" data-line="all" aria-pressed="true" style="--c:var(--ink)"><span class="disc">◆</span><span class="lbl">All</span></button>
+          <button class="roundel" data-line="bond" aria-pressed="false" style="--c:var(--l-bond)"><span class="disc">B</span><span class="lbl">Bonds</span></button>
+          <button class="roundel" data-line="swap" aria-pressed="false" style="--c:var(--l-swap)"><span class="disc">S</span><span class="lbl">Swaps</span></button>
+          <button class="roundel" data-line="opt" aria-pressed="false" style="--c:var(--l-opt)"><span class="disc">O</span><span class="lbl">Options</span></button>
+          <button class="roundel" data-line="fx" aria-pressed="false" style="--c:var(--l-fx)"><span class="disc">X</span><span class="lbl">FX</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="panel layers-panel">
+      <div class="panel-in">
+        <p class="panel-title">Optional layers</p>
+        <div class="switches" id="switches">
+          <label class="sw" style="--c:var(--l-bond)"><input type="checkbox" data-layer="persistence" checked><span class="track"></span><span class="txt">Persistence<small>QTS writer · database</small></span></label>
+          <label class="sw" style="--c:var(--l-mon)"><input type="checkbox" data-layer="monitoring"><span class="track"></span><span class="txt">Monitoring<small>health · alerting</small></span></label>
+          <label class="sw" style="--c:var(--l-fail)"><input type="checkbox" data-layer="failure"><span class="track"></span><span class="txt">Failure paths<small>retry · dead-letter</small></span></label>
+          <label class="sw" style="--c:var(--l-fover)"><input type="checkbox" data-layer="failover"><span class="track"></span><span class="txt">Failover<small>deal manager slaves</small></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-frame">
+    <div class="map-in">
+      <span class="corner-tr"></span><span class="corner-bl"></span>
+      <svg class="map" viewBox="-16 0 1456 600" id="map" role="img" aria-label="Transit-style map of the booking system's services"></svg>
+      <div class="map-caption">Not to scale · a learning map</div>
+    </div>
+  </div>
+
+  <!-- LEGEND + DETAIL -->
+  <div class="row">
+    <div class="panel key">
+      <div class="panel-in">
+        <p class="panel-title">Key</p>
+        <dl>
+          <dt><span class="swatch-line" style="background:var(--l-bond)"></span></dt><dd><b>Each line is a product</b> — bonds, swaps, options, FX</dd>
+          <dt><span class="mk"><svg width="22" height="22"><circle cx="11" cy="11" r="7" fill="var(--paper-hi)" stroke="var(--ink)" stroke-width="3.5"/></svg></span></dt><dd><b>Interchange</b> — a shared core service every product passes through</dd>
+          <dt><span class="mk"><svg width="22" height="22"><circle cx="11" cy="11" r="6" fill="var(--paper-hi)" stroke="var(--l-swap)" stroke-width="3"/></svg></span></dt><dd><b>Stop</b> — a service on one product's path</dd>
+          <dt><span class="mk"><svg width="22" height="22"><circle cx="11" cy="11" r="6" fill="var(--paper-hi)" stroke="var(--l-mon)" stroke-width="2.5" stroke-dasharray="3 2"/></svg></span></dt><dd><b>Layer service</b> — appears when you switch a layer on</dd>
+          <dt><span class="mk"><svg width="22" height="22"><line x1="2" y1="11" x2="20" y2="11" stroke="var(--ink-2)" stroke-width="2" stroke-dasharray="2 3"/></svg></span></dt><dd><b>Dotted link</b> — monitoring &amp; control (MFC sockets); solid lines are IBM&nbsp;MQ</dd>
+        </dl>
+        <p class="sub">Switch layers on above to reveal more of the ~100 services, a few at a time.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-in" id="detail">
+        <div class="file-empty">
+          <div class="big">Select a station</div>
+          <div>Tap any station on the map to read what it does, which products run through it, and who owns it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Booking Transit Authority · a learning map, not a live system · Edition 2026</footer>
+</div>
+
+<script>
+const C={bond:'#2E6E8E',swap:'#4E7A44',opt:'#844E6E',fx:'#BD852A',fail:'#A6402F',mon:'#2F7E77',fover:'#6B5BA6',ink:'#2B2620',paper:'#F7F0DE'};
+const LINE_NAME={bond:'Bonds',swap:'Swaps',opt:'Options',fx:'FX'};
+
+/* product line polylines (transit 45deg geometry) */
+const LINES={
+  bond:{color:C.bond,pts:[[120,150],[190,150],[313,273],[1057,273],[1180,150]]},
+  swap:{color:C.swap,pts:[[120,230],[210,230],[261,281],[1129,281],[1180,230]]},
+  opt:{color:C.opt,pts:[[120,360],[210,360],[281,289],[1109,289],[1180,360]]},
+  fx:{color:C.fx,pts:[[120,440],[190,440],[333,297],[1037,297],[1180,440]]},
+};
+
+/* stations */
+const S=[
+  {id:'bondfeed',name:'Bond feed',x:120,y:150,type:'stop',lines:['bond'],lay:'base',lp:'left',
+   role:'Ingest · bonds',desc:'Where bond trades enter the system, from trading front-ends and external feeds. Normalises them into the common deal format everything else understands.',trans:'IBM MQ',owner:'Feeds team',q:['BOND.IN']},
+  {id:'swapfeed',name:'Swap feed',x:120,y:230,type:'stop',lines:['swap'],lay:'base',lp:'left',
+   role:'Ingest · swaps',desc:'Entry point for swap trades from front-ends and counterparties. Normalises and timestamps each deal before it joins the network.',trans:'IBM MQ',owner:'Feeds team',q:['SWAP.IN']},
+  {id:'optfeed',name:'Option feed',x:120,y:360,type:'stop',lines:['opt'],lay:'base',lp:'left',
+   role:'Ingest · options',desc:'Entry point for option trades. Normalises deal terms (strike, expiry, style) into the common format.',trans:'IBM MQ',owner:'Feeds team',q:['OPT.IN']},
+  {id:'fxgw',name:'FX gateway',x:120,y:440,type:'stop',lines:['fx'],lay:'base',lp:'left',
+   role:'Ingest · FX',desc:'The FIX/SWIFT gateway where FX trades arrive, often at high volume. Validates message structure and normalises into the common format.',trans:'FIX / IBM MQ',owner:'Feeds team',q:['FX.IN.FIX']},
+
+  {id:'refdata',name:'Reference data',x:350,y:285,type:'core',lines:['all'],lay:'base',lp:'top',
+   role:'Enrichment · shared core',desc:"The system's dictionary. Confirms every counterparty, instrument, currency and calendar on a deal is real and known before booking is allowed. If a deal names something it doesn't recognise, it's rejected here — the single biggest cause of booking rejections.",trans:'IBM MQ',owner:'Reference data team',q:['REF.LOOKUP']},
+  {id:'pricing',name:'Pricing',x:480,y:285,type:'core',lines:['all'],lay:'base',lp:'top',
+   role:'Enrichment · shared core',desc:'Values the deal using rates and curves, and checks the agreed price is within tolerance of the market. A tolerance breach is flagged for review rather than booked silently.',trans:'IBM MQ',owner:'Pricing team',q:['PRICE.REQ']},
+  {id:'dm',name:'Deal manager',x:620,y:285,type:'big',lines:['all'],lay:'base',lp:'top',
+   role:'Booking engine · shared core',desc:"The heart of booking. Every deal from every product passes through here to be validated against business rules, assigned its official trade ID, and turned from a raw message into a booked trade. It's the busiest interchange on the map — if it slows, everything behind it queues.",trans:'IBM MQ',owner:'Booking core team',q:['DEAL.BOOK.Q','DEAL.BOOKED.OUT']},
+  {id:'indexer',name:'Deal indexer',x:770,y:285,type:'core',lines:['all'],lay:'base',lp:'top',
+   role:'Search & views · shared core',desc:"Makes booked deals findable. Builds the searchable index behind trade search, blotters and position views. When it stalls, deals are booked but invisible — support's classic \u201cI booked it but I can't find it.\u201d",trans:'IBM MQ',owner:'Search team',q:['DEAL.INDEX.IN']},
+
+  {id:'reg',name:'Regulatory exporter',x:1180,y:150,type:'stop',lines:['bond'],lay:'base',lp:'right',
+   role:'Export · bonds',desc:'Sends booked bond trades on to regulatory and reporting destinations, in the formats each downstream body expects.',trans:'IBM MQ',owner:'Regulatory reporting',q:['EXPORT.REG.Q']},
+  {id:'downstream',name:'Downstream exporter',x:1180,y:230,type:'stop',lines:['swap'],lay:'base',lp:'right',
+   role:'Export · swaps',desc:'Feeds booked swap trades to downstream systems — settlement, risk and client platforms — and waits for their acknowledgement.',trans:'IBM MQ',owner:'Downstream integrations',q:['EXPORT.DS.Q']},
+  {id:'risk',name:'Risk exporter',x:1180,y:360,type:'stop',lines:['opt'],lay:'base',lp:'right',
+   role:'Export · options',desc:'Sends option trades and their risk sensitivities (the greeks) to the firm-wide risk platform.',trans:'IBM MQ',owner:'Risk integrations',q:['EXPORT.RISK.Q']},
+  {id:'market',name:'Market exporter',x:1180,y:440,type:'stop',lines:['fx'],lay:'base',lp:'right',
+   role:'Export · FX',desc:'Publishes booked FX trades to market and client feeds, at the pace downstream can accept them.',trans:'IBM MQ',owner:'FX integrations',q:['EXPORT.MKT.Q']},
+
+  /* persistence layer */
+  {id:'qts',name:'QTS writer',x:900,y:285,type:'core',lines:['all'],lay:'persistence',lp:'top',
+   role:'Persistence · the scribe',desc:"The system's scribe. Takes booked deals and writes them durably to the database — the official record. (QTS = query transactional system.) If it falls behind, deals are booked and searchable but not yet safely stored.",trans:'IBM MQ',owner:'Persistence team',q:['DB.WRITE.Q']},
+  {id:'db',name:'Database',x:1010,y:285,type:'core',lines:['all'],lay:'persistence',lp:'top',
+   role:'Persistence · book of record',desc:'The book of record: the durable store of every booked trade. Every report and most downstream systems ultimately read from here.',trans:'Direct write',owner:'Database team',q:[]},
+  {id:'dbrep',name:'DB replica',x:950,y:420,type:'aux',lines:['all'],lay:'persistence',lp:'bottom',color:C.bond,
+   role:'Persistence · read replica',desc:'A read-only copy of the book of record, kept continuously in sync. Reporting and heavy queries read from here so they never slow down live booking.',trans:'Replication',owner:'Database team',q:[]},
+
+  /* monitoring layer */
+  {id:'mon',name:'Monitoring',x:600,y:470,type:'aux',lines:['all'],lay:'monitoring',lp:'bottom',color:C.mon,
+   role:'Observability · the watchtower',desc:'Watches the health of every service and queue — heartbeats, queue depths, throughput — and is the source of the operational dashboards. It reads the network rather than moving deals through it.',trans:'MFC sockets',owner:'Platform / SRE',q:[]},
+  {id:'alert',name:'Alerting',x:760,y:500,type:'aux',lines:['all'],lay:'monitoring',lp:'bottom',color:C.mon,
+   role:'Observability · alerts',desc:'Turns monitoring signals into pages and tickets when something crosses a threshold — a stalled queue, a dead consumer, a failed deploy.',trans:'MFC sockets',owner:'Platform / SRE',q:[]},
+
+  /* failure layer */
+  {id:'retry',name:'Retry queue',x:500,y:120,type:'aux',lines:['all'],lay:'failure',lp:'top',color:C.fail,
+   role:'Resilience · second chances',desc:'Holds deals that hit a transient error (a brief timeout, a momentary lock) so they can be automatically re-attempted a few times before the system gives up on them.',trans:'IBM MQ',owner:'Booking core team',q:['DEAL.BOOK.RETRY']},
+  {id:'dlq',name:'Dead-letter',x:800,y:120,type:'aux',lines:['all'],lay:'failure',lp:'top',color:C.fail,
+   role:'Resilience · the lost & found',desc:'Where messages land when they still can\u2019t be processed after retries. The first place support looks when deals go missing — each message keeps the reason it failed.',trans:'IBM MQ',owner:'On-call support',q:['DLQ.DEAL','DLQ.EXPORT']},
+
+  /* failover layer */
+  {id:'slave1',name:'DM slave 1',x:540,y:150,type:'aux',lines:['all'],lay:'failover',lp:'top',color:C.fover,
+   role:'Resilience · hot standby',desc:'A hot standby of the booking engine, kept in step with the master and ready to take over within seconds if it fails. Also shares read load during busy periods.',trans:'MFC sockets',owner:'Booking core team',q:[]},
+  {id:'slave2',name:'DM slave 2',x:700,y:150,type:'aux',lines:['all'],lay:'failover',lp:'top',color:C.fover,
+   role:'Resilience · hot standby',desc:'A second standby of the booking engine for extra resilience, kept in sync with the master alongside slave 1.',trans:'MFC sockets',owner:'Booking core team',q:[]},
+];
+
+/* extra (layer) links: dotted control/monitoring + dashed failure/replication */
+const LINKS=[
+  {lay:'persistence',from:'db',to:'dbrep',color:C.bond,dash:'6 5'},
+  {lay:'monitoring',from:'mon',to:'refdata',color:C.mon,dash:'2 4'},
+  {lay:'monitoring',from:'mon',to:'dm',color:C.mon,dash:'2 4'},
+  {lay:'monitoring',from:'mon',to:'indexer',color:C.mon,dash:'2 4'},
+  {lay:'monitoring',from:'mon',to:'qts',color:C.mon,dash:'2 4'},
+  {lay:'monitoring',from:'alert',to:'mon',color:C.mon,dash:'2 4'},
+  {lay:'failure',from:'retry',to:'dm',color:C.fail,dash:'6 4'},
+  {lay:'failure',from:'dlq',to:'indexer',color:C.fail,dash:'6 4'},
+  {lay:'failure',from:'dlq',to:'dm',color:C.fail,dash:'6 4'},
+  {lay:'failover',from:'slave1',to:'dm',color:C.fover,dash:'5 4'},
+  {lay:'failover',from:'slave2',to:'dm',color:C.fover,dash:'5 4'},
+];
+
+const byId=Object.fromEntries(S.map(s=>[s.id,s]));
+const SVGNS='http://www.w3.org/2000/svg';
+const el=(n,a={})=>{const e=document.createElementNS(SVGNS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const map=document.getElementById('map');
+
+/* ---- build layer groups ---- */
+const layers={base:el('g',{class:'layer-g'}),persistence:el('g',{class:'layer-g'}),monitoring:el('g',{class:'layer-g'}),failure:el('g',{class:'layer-g'}),failover:el('g',{class:'layer-g'})};
+
+/* product lines (base) */
+for(const key in LINES){
+  const L=LINES[key];
+  const d=L.pts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  const path=el('path',{class:'pline',d,stroke:L.color,'stroke-width':6,'data-line':key});
+  layers.base.appendChild(path);
+}
+
+/* layer links (draw before stations of that layer) */
+for(const lk of LINKS){
+  const a=byId[lk.from],b=byId[lk.to];
+  const line=el('line',{class:'mlink',x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:lk.color,'stroke-width':2,'stroke-dasharray':lk.dash,'stroke-linecap':'round'});
+  layers[lk.lay].appendChild(line);
+}
+
+/* stations */
+function marker(s){
+  const g=el('g',{class:'marker'});
+  if(s.type==='big'||s.type==='core'){
+    g.appendChild(el('circle',{cx:s.x,cy:s.y,r:s.type==='big'?16:13,fill:C.paper,stroke:C.ink,'stroke-width':4}));
+  }else if(s.type==='aux'){
+    g.appendChild(el('circle',{cx:s.x,cy:s.y,r:7.5,fill:C.paper,stroke:s.color||C.ink,'stroke-width':3,'stroke-dasharray':'4 2.5'}));
+  }else{ /* stop */
+    const c=s.lines[0]!=='all'?LINES[s.lines[0]].color:C.ink;
+    g.appendChild(el('circle',{cx:s.x,cy:s.y,r:7.5,fill:C.paper,stroke:c,'stroke-width':3.5}));
+  }
+  return g;
+}
+function label(s){
+  const big=s.type==='big', trunk=(s.type==='core'||big);
+  let x=s.x,y=s.y,anchor='middle';
+  if(s.lp==='top'){ y=s.y-(trunk?(big?42:38):20); }
+  else if(s.lp==='bottom'){ y=s.y+(trunk?46:26); }
+  else if(s.lp==='left'){ x=s.x-15;y=s.y+4;anchor='end'; }
+  else if(s.lp==='right'){ x=s.x+16;y=s.y+4;anchor='start'; }
+  const t=el('text',{x,y,'text-anchor':anchor,'font-size':big?18:15});
+  t.textContent=s.name;
+  return t;
+}
+for(const s of S){
+  const g=el('g',{class:'station','data-id':s.id,tabindex:'0',role:'button'});
+  g.setAttribute('aria-label',s.name+': '+s.role);
+  g.appendChild(el('circle',{class:'hit',cx:s.x,cy:s.y,r:20}));
+  g.appendChild(marker(s));
+  g.appendChild(label(s));
+  g.addEventListener('click',()=>select(s.id));
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(s.id);}});
+  layers[s.lay].appendChild(g);
+}
+
+/* mount order: base first (lines under), then layers on top */
+map.appendChild(layers.base);
+map.appendChild(layers.persistence);
+map.appendChild(layers.failover);
+map.appendChild(layers.failure);
+map.appendChild(layers.monitoring);
+
+/* ---- state ---- */
+let activeLine='all', selected=null;
+const layerOn={base:true,persistence:true,monitoring:false,failure:false,failover:false};
+
+function applyLayers(){
+  for(const k in layers){
+    layers[k].classList.toggle('layer-off',!layerOn[k]);
+  }
+}
+function applyLine(){
+  document.querySelectorAll('.pline').forEach(p=>{
+    p.classList.toggle('faded',activeLine!=='all' && p.dataset.line!==activeLine);
+  });
+  document.querySelectorAll('.station').forEach(g=>{
+    const s=byId[g.dataset.id];
+    const on = activeLine==='all' || s.lines.includes('all') || s.lines.includes(activeLine);
+    g.classList.toggle('faded',!on);
+  });
+}
+function select(id){
+  selected=id;
+  document.querySelectorAll('.station').forEach(g=>g.classList.toggle('sel',g.dataset.id===id));
+  renderDetail(byId[id]);
+}
+
+/* ---- detail panel ---- */
+function discFor(s){
+  if(s.type==='big'||s.type==='core') return `border-color:${C.ink}`;
+  if(s.type==='aux') return `border-color:${s.color||C.ink};border-style:dashed`;
+  const c=s.lines[0]!=='all'?LINES[s.lines[0]].color:C.ink;
+  return `border-color:${c}`;
+}
+function renderDetail(s){
+  const lineTags = s.lines.includes('all')
+    ? ['bond','swap','opt','fx'].map(k=>`<span class="pill" style="background:${LINES[k].color}">${LINE_NAME[k]}</span>`).join('')
+    : s.lines.map(k=>`<span class="pill" style="background:${LINES[k].color}">${LINE_NAME[k]}</span>`).join('');
+  const {up,down}=neighbours(s.id);
+  const qhtml = s.q.length ? s.q.map(q=>`<span class="qname">${q}</span>`).join('') : '<p style="margin:0;color:var(--ink-3)">—</p>';
+  document.getElementById('detail').innerHTML=`
+    <p class="panel-title">Station file</p>
+    <div class="file-head">
+      <div class="file-disc" style="${discFor(s)}"></div>
+      <div><h3>${s.name}</h3><div class="role">${s.role}</div></div>
+    </div>
+    <p class="file-desc">${s.desc}</p>
+    <div class="file-grid">
+      <div class="field" style="grid-column:1 / -1"><span>Lines through here</span><div class="pills">${lineTags}</div></div>
+      <div class="field"><span>Feeds from</span><p>${up}</p></div>
+      <div class="field"><span>Feeds into</span><p>${down}</p></div>
+      <div class="field"><span>Transport</span><p>${s.trans}</p></div>
+      <div class="field"><span>Owned by</span><p>${s.owner}</p></div>
+      <div class="field" style="grid-column:1 / -1"><span>Queues</span>${qhtml}</div>
+    </div>`;
+}
+/* rough upstream/downstream by lifecycle order along the spine */
+const ORDER=['bondfeed','swapfeed','optfeed','fxgw','refdata','pricing','dm','indexer','qts','db','reg','downstream','risk','market'];
+function neighbours(id){
+  const s=byId[id];
+  if(s.lay==='monitoring') return {up:'Taps core services',down:'Dashboards & alerts'};
+  if(s.lay==='failover') return {up:'Deal manager (master)',down:'Takes over on failure'};
+  if(id==='retry') return {up:'Deal manager',down:'Deal manager (re-attempt)'};
+  if(id==='dlq') return {up:'Deal manager · indexer',down:'Support triage'};
+  if(id==='dbrep') return {up:'Database',down:'Reporting'};
+  const i=ORDER.indexOf(id);
+  if(i<0) return {up:'—',down:'—'};
+  const nm=x=> x?byId[x].name:'—';
+  if(['bondfeed','swapfeed','optfeed','fxgw'].includes(id)) return {up:'External feeds / front-ends',down:nm('refdata')};
+  if(['reg','downstream','risk','market'].includes(id)) return {up:layerOn.persistence?nm('db'):nm('indexer'),down:'Downstream systems'};
+  const prev=ORDER[i-1],next=ORDER[i+1];
+  return {up:nm(prev),down:nm(next)};
+}
+
+/* ---- wire controls ---- */
+document.getElementById('roundels').addEventListener('click',e=>{
+  const b=e.target.closest('.roundel'); if(!b)return;
+  activeLine=b.dataset.line;
+  document.querySelectorAll('.roundel').forEach(r=>r.setAttribute('aria-pressed',r===b));
+  applyLine();
+});
+document.getElementById('switches').addEventListener('change',e=>{
+  const cb=e.target.closest('input'); if(!cb)return;
+  layerOn[cb.dataset.layer]=cb.checked;
+  applyLayers();
+});
+
+applyLayers(); applyLine(); select('dm');
+</script>
+</body>
+</html>
